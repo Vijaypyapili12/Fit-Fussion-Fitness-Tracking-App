@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.glass-card {
+  @apply w-full max-w-5xl mx-auto p-6 my-8; /* Full width, centered, and responsive padding */
+  background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+  backdrop-filter: blur(10px); /* Blur effect for frosted glass */
+  border-radius: 16px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Soft shadow */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
+}
+
+/* Moving background animation */
+@keyframes movingBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.moving-background {
+  @apply w-full h-screen; /* Full screen coverage */
+  background: linear-gradient(120deg, #84fab0, #8fd3f4, #a6c1ff);
+  background-size: 200% 200%;
+  animation: movingBackground 10s ease-in-out infinite;
+}
