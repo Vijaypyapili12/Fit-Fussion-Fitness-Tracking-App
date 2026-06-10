@@ -1,6 +1,5 @@
-// server/models/User.js
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -18,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Hash password before saving
+// Hash password before saving to the database collection
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -26,9 +25,11 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Compare password for login
+// Compare incoming password for login verification
 userSchema.methods.matchPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-module.exports = mongoose.model("User", userSchema);
+// THE CRUCIAL FIX: Changed from module.exports to named default ES Module export
+const User = mongoose.model("User", userSchema);
+export default User;

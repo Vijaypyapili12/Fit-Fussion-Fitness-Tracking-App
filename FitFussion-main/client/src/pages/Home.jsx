@@ -4,9 +4,9 @@ import { FaDumbbell, FaChartLine, FaRunning, FaUsers } from "react-icons/fa";
 import fitnessImage from "../assets/fitness-image.jpeg";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import emailjs from "emailjs-com";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { sendContactMessage } from "../services/api"; // Secure DB service hook
 
 const Home = () => {
   const navigate = useNavigate();
@@ -27,9 +27,9 @@ const Home = () => {
     dailyGoal: 10000,
   });
   const [friendActivities, setFriendActivities] = useState([
-    "John completed a 5K run today!",
-    "Sarah hit her 10,000 step goal!",
-    "Alex joined a yoga class!",
+    "Vjoy completed a 5K run today!",
+    "Arjun hit her 10,000 step goal!",
+    "Preethi joined a yoga class!",
   ]);
 
   const [formData, setFormData] = useState({
@@ -60,29 +60,44 @@ const Home = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  // 🌟 FIX: Swapped out EmailJS for your explicit backend MERN pipeline save
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    emailjs
-      .send(
-        "service_08p64sf",  
-        "template_b2dtb06", // Replace with your EmailJS Template ID
-        formData,
-        "XO1lXO1OPc0oyt00g" // Replace with your EmailJS User ID (Public Key)
-      )
-      .then(
-        (result) => {
-          toast.success("Message sent! We’ll get back to you soon.", {
-            position: "bottom-right",
-          });
-          setFormData({ name: "", email: "", message: "" });
-        },
-        (error) => {
-          toast.error("Error sending message. Please try again.", {
-            position: "bottom-right",
-          });
-        }
-      );
+    
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      return toast.warn("Please completely fill in all inputs before sending.", {
+        position: "bottom-right",
+      });
+    }
+
+    try {
+      setLoading(true);
+      
+      // Directly posts to http://localhost:5000/api/messages
+      await sendContactMessage({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message
+      });
+
+      toast.success("Message sent! We’ll get back to you soon.", {
+        position: "bottom-right",
+      });
+      
+      // Clear inputs cleanly on completion success
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("Database tracking contact crash details:", error);
+      toast.error("Error sending message. Please try again.", {
+        position: "bottom-right",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // State flag for loading transitions
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
@@ -243,6 +258,7 @@ const Home = () => {
           ))}
         </ul>
       </div>
+
       {/* Quick Links for Common Actions */}
       <div className="container mx-auto flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8 my-10">
         <motion.div whileHover={{ scale: 1.05, y: -5 }}>
@@ -287,6 +303,7 @@ const Home = () => {
             type="text"
             name="name"
             value={formData.name}
+            disabled={loading}
             onChange={handleInputChange}
             placeholder="Your Name"
             className="w-full md:w-1/2 px-6 py-3 rounded-lg text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all duration-300 ease-in-out"
@@ -296,6 +313,7 @@ const Home = () => {
             type="email"
             name="email"
             value={formData.email}
+            disabled={loading}
             onChange={handleInputChange}
             placeholder="Your Email"
             className="w-full md:w-1/2 px-6 py-3 rounded-lg text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all duration-300 ease-in-out"
@@ -304,18 +322,21 @@ const Home = () => {
           <textarea
             name="message"
             value={formData.message}
+            disabled={loading}
             onChange={handleInputChange}
             placeholder="Your Message"
             className="w-full md:w-1/2 px-6 py-3 rounded-lg text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all duration-300 ease-in-out"
             rows="4"
+            required
           />
           <button
             type="submit"
+            disabled={loading}
             className="px-8 py-3 font-semibold rounded-lg shadow-md transition duration-300 ease-in-out
              bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600
-             focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transform hover:scale-105"
+             focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transform hover:scale-105 disabled:opacity-50"
           >
-            Send Message
+            {loading ? "Sending..." : "Send Message"}
           </button>
         </form>
       </div>

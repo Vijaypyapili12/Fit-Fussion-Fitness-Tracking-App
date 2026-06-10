@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { getGoals, deleteGoal, updateGoal } from "../services/api";
 import GoalForm from "./GoalForm";
-import { FaWalking, FaRunning, FaBicycle } from "react-icons/fa";
+import { FaWalking, FaRunning, FaBicycle, FaPlus } from "react-icons/fa";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { motion } from "framer-motion";
@@ -13,6 +13,7 @@ const GoalList = () => {
   const [goals, setGoals] = useState([]);
   const [editingGoal, setEditingGoal] = useState(null);
   const [error, setError] = useState("");
+  const [progressInputs, setProgressInputs] = useState({}); // Tracks independent progress input text values for each card ID
 
   const fetchGoals = async () => {
     try {
@@ -65,8 +66,34 @@ const GoalList = () => {
     }
   };
 
-  const handleEdit = (goal) => {
-    setEditingGoal(goal);
+  // THE NEW INTERACTIVE PROGRESS ACCUMULATOR ACTION PIPELINE
+  const handleProgressSubmit = async (e, goal) => {
+    e.preventDefault();
+    const inputVal = progressInputs[goal._id];
+
+    if (!inputVal || Number(inputVal) <= 0) {
+      return toast.warn("Please type a valid value greater than 0.");
+    }
+
+    try {
+      // Fires the exact progress made down to your PUT resource endpoint
+      await updateGoal(goal._id, { progressMade: Number(inputVal) });
+      
+      // Clear out the single state register field
+      setProgressInputs({ ...progressInputs, [goal._id]: "" });
+      fetchGoals();
+      toast.success(`Progress successfully recorded for ${goal.type}!`);
+    } catch (error) {
+      console.error("Error submitting progress metrics:", error);
+      toast.error("Failed to append goal progress.");
+    }
+  };
+
+  const handleInputChange = (goalId, value) => {
+    setProgressInputs({
+      ...progressInputs,
+      [goalId]: value,
+    });
   };
 
   const markAsComplete = async (goal) => {
@@ -84,7 +111,9 @@ const GoalList = () => {
 
   const calculatePercentage = (goal) => {
     const progress = goal.target - goal.targetLeft;
-    return (progress / goal.target) * 100;
+    if (goal.target <= 0) return 0;
+    const computed = (progress / goal.target) * 100;
+    return Math.min(100, Math.max(0, computed)); // Bounds checking calculation parameters
   };
 
   const getMotivationalMessage = (percentage) => {
@@ -139,60 +168,81 @@ const GoalList = () => {
           return (
             <motion.div
               key={goal._id}
-              className="glass-card p-6 rounded-2xl shadow-lg transition hover:shadow-2xl bg-white dark:bg-gray-800 bg-opacity-20 dark:bg-opacity-80 backdrop-filter backdrop-blur-lg"
+              className="glass-card p-6 rounded-2xl shadow-lg transition hover:shadow-2xl bg-white dark:bg-gray-800 bg-opacity-20 dark:bg-opacity-80 backdrop-filter backdrop-blur-lg flex flex-col justify-between"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="flex items-center space-x-2 mb-4">
-                <GoalIcon type={goal.type} />
-                <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
-                  {goal.type}
-                </h3>
+              <div>
+                <div className="flex items-center space-x-2 mb-4">
+                  <GoalIcon type={goal.type} />
+                  <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 capitalize">
+                    {goal.type}
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <p>Target: <span className="font-semibold text-gray-700 dark:text-gray-200">{goal.target}</span></p>
+                  <p>Target Left: <span className="font-semibold text-gray-700 dark:text-gray-200">{goal.targetLeft ?? "N/A"}</span></p>
+                </div>
+
+                <div className="w-20 h-20 mx-auto mb-4">
+                  <CircularProgressbar
+                    value={percentage}
+                    text={`${Math.round(percentage)}%`}
+                    styles={buildStyles({
+                      pathColor: percentage === 100 ? "#3b82f6" : "#34d399",
+                      textColor: "#374151",
+                      trailColor: "#d1d5db",
+                    })}
+                  />
+                </div>
+
+                <p className="text-sm italic text-gray-500 dark:text-gray-400 text-center mb-4">
+                  {getMotivationalMessage(percentage)}
+                </p>
               </div>
 
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Target: {goal.target}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Target Left: {goal.targetLeft || "N/A"}
-              </p>
+              <div>
+                {/* INLINE ADD PROGRESS INPUT BLOCK PANEL (Replaces Old Edit Field View) */}
+                {!goal.completed && (
+                  <form 
+                    onSubmit={(e) => handleProgressSubmit(e, goal)} 
+                    className="flex space-x-2 mb-4 border-t border-gray-100 dark:border-gray-700 pt-4"
+                  >
+                    <input
+                      type="number"
+                      value={progressInputs[goal._id] || ""}
+                      onChange={(e) => handleInputChange(goal._id, e.target.value)}
+                      placeholder="Enter progress value..."
+                      className="w-full px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-md whitespace-nowrap"
+                    >
+                      <FaPlus className="text-[10px]" /> Progress
+                    </button>
+                  </form>
+                )}
 
-              <div className="w-20 h-20 mx-auto mb-4">
-                <CircularProgressbar
-                  value={percentage}
-                  text={`${Math.round(percentage)}%`}
-                  styles={buildStyles({
-                    pathColor: percentage === 100 ? "#3b82f6" : "#34d399",
-                    textColor: "#374151",
-                    trailColor: "#d1d5db",
-                  })}
-                />
-              </div>
-
-              <p className="text-sm italic text-gray-500 dark:text-gray-400 text-center mb-4">
-                {getMotivationalMessage(percentage)}
-              </p>
-
-              <div className="flex items-center justify-around mt-4">
-                <button
-                  onClick={() => handleEdit(goal)}
-                  className="bg-yellow-500 dark:bg-yellow-600 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded-full shadow-lg transition transform hover:scale-105 flex items-center gap-1"
-                >
-                  <i className="fas fa-edit"></i> Edit
-                </button>
-                <button
-                  onClick={() => confirmDelete(goal._id)}
-                  className="bg-red-500 dark:bg-red-600 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-full shadow-lg transition transform hover:scale-105 flex items-center gap-1"
-                >
-                  <i className="fas fa-trash-alt"></i> Delete
-                </button>
-                <button
-                  onClick={() => markAsComplete(goal)}
-                  className="bg-green-500 dark:bg-green-600 hover:bg-green-600 text-white font-bold py-1 px-2 rounded-full shadow-lg transition transform hover:scale-105 flex items-center gap-1"
-                >
-                  <i className="fas fa-check-circle"></i> Complete
-                </button>
+                <div className="flex items-center justify-around gap-2 border-t border-gray-100 dark:border-gray-700 pt-2">
+                  <button
+                    onClick={() => confirmDelete(goal._id)}
+                    className="bg-red-500 dark:bg-red-600 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-full shadow transition transform hover:scale-105 flex items-center gap-1 text-xs"
+                  >
+                    <i className="fas fa-trash-alt"></i> Delete
+                  </button>
+                  
+                  {!goal.completed && (
+                    <button
+                      onClick={() => markAsComplete(goal)}
+                      className="bg-green-500 dark:bg-green-600 hover:bg-green-600 text-white font-bold py-1.5 px-3 rounded-full shadow transition transform hover:scale-105 flex items-center gap-1 text-xs"
+                    >
+                      <i className="fas fa-check-circle"></i> Complete
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           );

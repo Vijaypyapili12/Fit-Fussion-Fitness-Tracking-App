@@ -6,45 +6,86 @@ import routes from "./routes/index.js";
 import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import challengeRoutes from "./routes/challengeRoutes.js"; 
+import { createMessage } from "./controllers/messageController.js"; // Direct secure controller import
 
-// 1. MUST BE FIRST: Load environment variables from your .env file
+// 1. Load environment variables from your .env file
 dotenv.config();
 
-// 2. MUST BE SECOND: Connect to MongoDB Atlas (Now it can safely read MONGO_URI)
+// 2. Connect to MongoDB Atlas
 connectDB();
 
+// 3. INITIALIZE EXPRESS APPLICATION ENGINE
 const app = express();
 
-// Middleware
+// 4. ESSENTIAL BODY PARSERS & MIDDLEWARES
 app.use(express.json());
-app.use(cors({
-  origin: "https://fit-fussion-gamma.vercel.app", // allow only your frontend
-  credentials: true
-}));
-app.use(morgan("dev"));
-app.use(helmet());
+app.use(express.urlencoded({ extended: true }));
 
-// Rate Limiter Setup
+// DEVELOPMENT STAGE CORS DEFINITION
+const allowedOrigins = [
+  "https://fit-fussion-gamma.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS Blocked: The origin ${origin} is not explicitly white-listed.`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Secondary Production Shield Middlewares
+app.use(morgan("dev"));
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
+// Rate Limiter Setup 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 200, 
 });
 app.use(limiter);
 
-// Routes
+// ==========================================
+// 5. OPERATIONAL ROUTING BINDERS
+// ==========================================
+
+// Operational Base Target Routing
 app.get("/", (req, res) => {
-  res.send("Server is running");
+  res.send("Server is running perfectly.");
 });
 
+
+// Community Challenge Global Endpoint Pipeline Route
+app.use("/api/challenges", challengeRoutes); 
+
+// Master API Hub Router Binding (for Users, Activities, Goals, etc.)
 app.use("/api", routes);
 
-// Global Error Handler
+// ==========================================
+// 6. ERROR HANDLING & LIFECYCLE
+// ==========================================
+
+// Global Interception Error Catchment Handler
 app.use((err, req, res, next) => {
-  console.error("Global error handler:", err.stack);
-  res
-    .status(500)
-    .json({ success: false, message: "An unexpected error occurred." });
+  console.error("Global captured stack trace error:", err.message);
+  res.status(500).json({ 
+    success: false, 
+    message: "An unexpected backend error occurred.",
+    error: err.message 
+  });
 });
 
-const PORT = process.env.PORT || 5176;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Security-Aligned Server running on port ${PORT}`));
