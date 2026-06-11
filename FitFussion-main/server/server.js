@@ -7,7 +7,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import challengeRoutes from "./routes/challengeRoutes.js"; 
-import { createMessage } from "./controllers/messageController.js"; // Direct secure controller import
+import { createMessage } from "./controllers/messageController.js"; 
 
 // 1. Load environment variables from your .env file
 dotenv.config();
@@ -22,21 +22,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DEVELOPMENT STAGE CORS DEFINITION
+// CLEAN PRODUCTION CORS CONFIGURATION
 const allowedOrigins = [
   "http://localhost:5173", 
-  "https://fit-fussion-fitness-tracking-app.vercel.app/"
+  "https://fit-fussion-fitness-tracking-app.vercel.app" // 🌟 Fixed: Removed the trailing slash "/"
 ];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"]
-}));
-
+// 🌟 Fixed: Combined into a single, comprehensive CORS middleware configuration
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
     if (!origin) return callback(null, true);
+    
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = `CORS Blocked: The origin ${origin} is not explicitly white-listed.`;
       return callback(new Error(msg), false);
@@ -69,7 +66,6 @@ app.use(limiter);
 app.get("/", (req, res) => {
   res.send("Server is running perfectly.");
 });
-
 
 // Community Challenge Global Endpoint Pipeline Route
 app.use("/api/challenges", challengeRoutes); 
