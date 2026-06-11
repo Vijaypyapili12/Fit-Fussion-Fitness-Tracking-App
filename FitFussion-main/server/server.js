@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // DEVELOPMENT STAGE CORS DEFINITION
 const allowedOrigins = [
   "http://localhost:5173", 
-  "https://fit-fussion-fitness-tracking-app-git-main-vijay2244s-projects.vercel.app"
+  "https://fit-fussion-fitness-tracking-app.vercel.app/"
 ];
 
 app.use(cors({
