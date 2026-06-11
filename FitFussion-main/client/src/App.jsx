@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import { FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import axios from "axios"; // 🌟 Added Axios import for API communication
 import Home from "./pages/Home";
-import Dashboard from "./components/Dashboard"; // Double check path alignment match
+import Dashboard from "./components/Dashboard"; 
 import Activities from "./pages/Activities";
 import Goals from "./pages/Goals";
 import LogWorkout from "./pages/LogWorkout";
 import Challenge from "./pages/Challenge";
 import Login from "./pages/Login";   
 import Signup from "./pages/Signup"; 
-import ProtectedRoute from "./components/ProtectedRoute"; // Stabilized exact string matching
+import ProtectedRoute from "./components/ProtectedRoute"; 
 import DarkModeToggle from "./components/DarkModeToggle";
 import { HelmetProvider, Helmet } from "react-helmet-async"; 
 import { ToastContainer } from "react-toastify";  
@@ -22,11 +23,28 @@ const App = () => {
   // Dynamic Authentication Evaluator
   const isAuthenticated = !!localStorage.getItem("userInfo");
 
-  const handleSubscribe = (event) => {
+  // 🌟 Updated: Asynchronous Newsletter Storage Pipeline
+  const handleSubscribe = async (event) => {
     event.preventDefault();
-    console.log("Subscribed with email:", email);
-    alert("Thank you for subscribing!");
-    setEmail("");  
+
+    try {
+      // Pipes the input value straight to your newly declared Render route
+      const response = await axios.post(
+        "https://fit-fussion-fitness-tracking-app.onrender.com/api/subscribe", 
+        { email },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        alert("Thank you for subscribing!");
+        setEmail(""); // Clears the layout form input
+      }
+    } catch (error) {
+      console.error("Subscription pipeline error:", error);
+      // Grabs the error message from the backend if email is already registered
+      const errorMsg = error.response?.data?.message || "Subscription encounter faulted. Please try again.";
+      alert(errorMsg);
+    }
   };
 
   const handleLogout = () => {
@@ -259,13 +277,13 @@ const App = () => {
               {/* Centered Social Media and Credits */}
               <div className="mt-10 text-center">
                 <div className="flex justify-center space-x-8 mb-6">
-                  <a href="https://x.com/singh_harsh3110" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
+                  <a href="" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
                     <FaTwitter className="text-3xl" />
                   </a>
-                  <a href="https://www.instagram.com/gaharwar_harsh31/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
+                  <a href="https://www.instagram.com/vijay_pyapili/?hl=en" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
                     <FaInstagram className="text-3xl" />
                   </a>
-                  <a href="https://www.linkedin.com/in/harsh-singh-73758325a/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
+                  <a href="https://www.linkedin.com/in/vijay-kumar-pyapili-0aa53729b/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
                     <FaLinkedin className="text-3xl" />
                   </a>
                 </div>
