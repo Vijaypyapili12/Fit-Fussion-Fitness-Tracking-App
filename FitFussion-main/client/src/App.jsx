@@ -277,8 +277,12 @@ const App = () => {
               {/* Centered Social Media and Credits */}
               <div className="mt-10 text-center">
                 <div className="flex justify-center space-x-8 mb-6">
-                  <a href="" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
-                    <FaTwitter className="text-3xl" />
+                  <a 
+                    href="#" 
+                    onClick={(e) => e.preventDefault()} 
+                    className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110"
+                  >
+                   <FaTwitter className="text-3xl" />
                   </a>
                   <a href="https://www.instagram.com/vijay_pyapili/?hl=en" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-blue-400 transition duration-300 transform hover:scale-110">
                     <FaInstagram className="text-3xl" />
