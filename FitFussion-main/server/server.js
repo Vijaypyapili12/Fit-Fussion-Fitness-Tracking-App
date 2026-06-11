@@ -24,11 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // DEVELOPMENT STAGE CORS DEFINITION
 const allowedOrigins = [
-  "https://fit-fussion-gamma.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173"
+  "http://localhost:5173", 
+  "https://fit-fussion-fitness-tracking-app.vercel.app/"
 ];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"]
+}));
 
 app.use(cors({
   origin: function (origin, callback) {
