@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import { FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import Home from "./pages/Home";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard"; // Double check path alignment match
 import Activities from "./pages/Activities";
 import Goals from "./pages/Goals";
 import LogWorkout from "./pages/LogWorkout";
 import Challenge from "./pages/Challenge";
 import Login from "./pages/Login";   
 import Signup from "./pages/Signup"; 
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute"; // Stabilized exact string matching
 import DarkModeToggle from "./components/DarkModeToggle";
-import { HelmetProvider, Helmet } from "react-helmet-async"; // Aligned: Prevents old lifecycle crashes
+import { HelmetProvider, Helmet } from "react-helmet-async"; 
 import { ToastContainer } from "react-toastify";  
 import "react-toastify/dist/ReactToastify.css";  
-import ContactForm from "./pages/ContactForm"; // Points to the pages directory instead
+import ContactForm from "./pages/ContactForm"; 
+
 const App = () => {
   const [email, setEmail] = useState("");
   
@@ -30,7 +31,7 @@ const App = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
-    window.location.href = "/login"; // Force-purges context and local state configurations
+    window.location.href = "/login"; 
   };
 
   return (
